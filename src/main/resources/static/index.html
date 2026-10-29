@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Banking LMS Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
+
+<!-- Top Navigation Bar -->
+<header class="bg-slate-900 text-white px-8 py-3.5 flex justify-between items-center shadow-md">
+    <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-building-columns text-blue-400 text-lg"></i>
+        <div>
+            <h1 class="font-bold text-sm tracking-wide">Core Banking LMS Terminal</h1>
+            <p class="text-[10px] text-slate-400">Core Loan Origination, Amortization & Repayments</p>
+        </div>
+    </div>
+    <div id="authHeaderBlock" class="flex items-center space-x-4 text-xs">
+        <span id="userInfo" class="text-slate-300"></span>
+        <button id="logoutBtn" onclick="logout()" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1 rounded">Logout</button>
+    </div>
+</header>
+
+<!-- Main Container -->
+<main class="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8">
+
+    <!-- 1. LOGIN SECTION -->
+    <div id="loginSection" class="max-w-md mx-auto mt-12 bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+        <div class="text-center mb-6">
+            <i class="fa-solid fa-shield-halved text-3xl text-blue-600 mb-2"></i>
+            <h2 class="text-lg font-bold text-slate-800">CBS System Authentication</h2>
+            <p class="text-xs text-slate-500">Sign in with role credentials</p>
+        </div>
+
+        <div id="loginError" class="hidden mb-4 p-2.5 rounded text-xs bg-rose-100 text-rose-800 font-medium"></div>
+
+        <form id="loginForm" class="space-y-4 text-xs">
+            <div>
+                <label class="block font-medium text-slate-700 mb-1">Username</label>
+                <input type="text" id="loginUser" required value="officer1"
+                       class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-600 outline-none">
+            </div>
+            <div>
+                <label class="block font-medium text-slate-700 mb-1">Password</label>
+                <input type="password" id="loginPass" required value="officer123"
+                       class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-600 outline-none">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded font-medium transition">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-1">
+            <div class="flex justify-between items-center">
+                <span>Officer: <code class="text-blue-600">officer1 / officer123</code></span>
+                <button onclick="fillDemo('officer1','officer123')" class="text-blue-600 underline">Select</button>
+            </div>
+            <div class="flex justify-between items-center">
+                <span>Customer 1: <code class="text-emerald-600">customer1 / customer123</code></span>
+                <button onclick="fillDemo('customer1','customer123')" class="text-blue-600 underline">Select</button>
+            </div>
+            <div class="flex justify-between items-center">
+                <span>Customer 2: <code class="text-emerald-600">customer2 / customer123</code></span>
+                <button onclick="fillDemo('customer2','customer123')" class="text-blue-600 underline">Select</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SECURE PORTAL (Dashboard) -->
+    <div id="dashboardSection" class="hidden space-y-6">
+
+        <!-- Customer Personal Profile Banner (Visible only for Customers) -->
+        <div id="customerProfileCard" class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm hidden">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-address-card text-blue-600 text-base"></i>
+                    <h2 class="text-sm font-bold text-slate-900">Customer Account Details</h2>
+                </div>
+                <span class="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-semibold" id="profCif">CIF-101</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Account Holder</span>
+                    <strong class="text-slate-800" id="profName">-</strong>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Contact Info</span>
+                    <span class="text-slate-700" id="profContact">-</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Registered Address</span>
+                    <span class="text-slate-700" id="profAddress">-</span>
+                </div>
+                <div class="bg-slate-50 p-2.5 rounded border border-slate-200">
+                    <span class="text-slate-400 block text-[10px] uppercase font-semibold">Designated Loan Officer</span>
+                    <strong class="text-blue-700 flex items-center gap-1.5" id="profOfficer">
+                        <i class="fa-solid fa-user-tie"></i> Vikram Malhotra
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workspace Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- Left: Loan Assigning / Application Form -->
+            <div class="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-2">
+                    <h2 class="text-sm font-bold text-slate-900" id="formHeaderTitle">Sanction / Assign Loan</h2>
+                    <p class="text-xs text-slate-500" id="formSubTitle">Assign new loan facility to customer</p>
+                </div>
+
+                <form id="loanForm" class="space-y-3 text-xs">
+                    <!-- Customer Dropdown (for Officer) -->
+                    <div id="officerCustSelector">
+                        <label class="block font-medium text-slate-700 mb-1">Target Customer (CIF)</label>
+                        <select id="assignCustomerId" class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-600 outline-none bg-white">
+                            <!-- Populated dynamically from /customers -->
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Principal (₹)</label>
+                            <input type="number" id="principalAmount" value="300000" step="any" required
+                                   class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-600 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Interest Rate (%)</label>
+                            <input type="number" id="interestRate" value="10.0" step="any" required
+                                   class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-600 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Tenure (Months)</label>
+                            <input type="number" id="tenureMonths" value="12" min="1" max="360" required
+                                   class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-600 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Facility Type</label>
+                            <select id="loanType" class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-600 outline-none bg-white">
+                                <option value="PERSONAL">Personal Loan</option>
+                                <option value="HOME">Housing Loan</option>
+                                <option value="AUTO">Auto Loan</option>
+                                <option value="BUSINESS">Business Facility</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded text-xs transition">
+                        Submit / Sanction Facility
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right: Active Loans Portfolio -->
+            <div class="lg:col-span-8 bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900">Active Facilities</h2>
+                        <p class="text-xs text-slate-500" id="tableSubtext">Accounts in active book</p>
+                    </div>
+                    <button onclick="fetchLoans()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                        <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] border-b border-slate-200">
+                            <th class="py-2.5 px-3">Loan ID</th>
+                            <th class="py-2.5 px-3">Customer</th>
+                            <th class="py-2.5 px-3">Scheme</th>
+                            <th class="py-2.5 px-3 text-right">Sanction Amount</th>
+                            <th class="py-2.5 px-3 text-center">Tenure</th>
+                            <th class="py-2.5 px-3 text-center">Status</th>
+                            <th class="py-2.5 px-3 text-right">Operations</th>
+                        </tr>
+                        </thead>
+                        <tbody id="loansTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 3. DETAILED REPAYMENT SCHEDULE & PAYMENT SECTION -->
+        <div id="scheduleSection" class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4 hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-3 gap-3">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900" id="scheduleTitle">Amortization & Payment Ledger</h3>
+                    <p class="text-xs text-slate-500">Track installment payments, mark received EMIs, or apply advance payments</p>
+                </div>
+
+                <!-- Advance Prepayment Box (Officer only) -->
+                <div id="advancePayControl" class="flex items-center gap-2">
+                    <input type="number" id="advanceAmountInput" placeholder="Advance Amount (₹)"
+                           class="px-2.5 py-1 border border-slate-300 rounded text-xs font-mono outline-none w-36">
+                    <button onclick="submitAdvancePayment()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-medium">
+                        Pay Advance
+                    </button>
+                </div>
+
+                <button onclick="document.getElementById('scheduleSection').classList.add('hidden')"
+                        class="text-xs text-slate-400 hover:text-slate-600 font-semibold px-2 py-1 border rounded w-fit">
+                    Close Ledger
+                </button>
+            </div>
+
+            <div class="overflow-x-auto max-h-96">
+                <table class="w-full text-left text-xs border border-slate-200 rounded">
+                    <thead class="sticky top-0 bg-slate-100 border-b text-slate-600 uppercase text-[10px]">
+                    <tr>
+                        <th class="py-2 px-3">Inst #</th>
+                        <th class="py-2 px-3">Due Date</th>
+                        <th class="py-2 px-3 text-right">EMI (₹)</th>
+                        <th class="py-2 px-3 text-right">Principal</th>
+                        <th class="py-2 px-3 text-right">Interest</th>
+                        <th class="py-2 px-3 text-right">Book Balance</th>
+                        <th class="py-2 px-3 text-center">Status</th>
+                        <th class="py-2 px-3 text-right">Receipt / Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody" class="divide-y divide-slate-100 font-mono text-[11px]"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+    let currentAuth = JSON.parse(localStorage.getItem("cbs_auth") || "null");
+    let activeSelectedLoanId = null;
+
+    function fillDemo(u, p) {
+        document.getElementById("loginUser").value = u;
+        document.getElementById("loginPass").value = p;
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const u = document.getElementById("loginUser").value;
+        const p = document.getElementById("loginPass").value;
+
+        try {
+            const res = await fetch("/api/v1/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: u, password: p })
+            });
+
+            if (!res.ok) throw new Error("Invalid username or password");
+            const data = await res.json();
+            currentAuth = data;
+            localStorage.setItem("cbs_auth", JSON.stringify(data));
+            initSession();
+        } catch (err) {
+            const errBox = document.getElementById("loginError");
+            errBox.innerText = err.message;
+            errBox.classList.remove("hidden");
+        }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", handleLogin);
+
+    function logout() {
+        localStorage.removeItem("cbs_auth");
+        currentAuth = null;
+        location.reload();
+    }
+
+    async function initSession() {
+        if (!currentAuth || !currentAuth.token) {
+            document.getElementById("loginSection").classList.remove("hidden");
+            document.getElementById("dashboardSection").classList.add("hidden");
+            document.getElementById("logoutBtn").classList.add("hidden");
+            document.getElementById("userInfo").innerText = "";
+            return;
+        }
+
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("dashboardSection").classList.remove("hidden");
+        document.getElementById("logoutBtn").classList.remove("hidden");
+
+        const isOfficer = currentAuth.role === "ROLE_OFFICER";
+        document.getElementById("userInfo").innerHTML = `
+                User: <strong class="text-white">${currentAuth.username}</strong>
+                <span class="px-1.5 py-0.5 rounded text-[10px] ${isOfficer ? 'bg-blue-600' : 'bg-emerald-600'} text-white ml-1">
+                    ${isOfficer ? 'OFFICER' : 'CUSTOMER'}
+                </span>
+            `;
+
+        if (isOfficer) {
+            document.getElementById("customerProfileCard").classList.add("hidden");
+            document.getElementById("officerCustSelector").classList.remove("hidden");
+            document.getElementById("advancePayControl").classList.remove("hidden");
+            document.getElementById("formHeaderTitle").innerText = "Assign Facility to Customer";
+            document.getElementById("formSubTitle").innerText = "Assign multiple loans to any customer CIF";
+            document.getElementById("tableSubtext").innerText = "All active customer facilities in portfolio";
+            loadCustomerDropdown();
+        } else {
+            document.getElementById("customerProfileCard").classList.remove("hidden");
+            document.getElementById("officerCustSelector").classList.add("hidden");
+            document.getElementById("advancePayControl").classList.add("hidden");
+            document.getElementById("formHeaderTitle").innerText = "Request New Loan";
+            document.getElementById("formSubTitle").innerText = "Apply for an additional loan facility";
+            document.getElementById("tableSubtext").innerText = "All active loan accounts under your CIF";
+
+            // Populate Customer Profile
+            document.getElementById("profCif").innerText = "CIF-" + currentAuth.customerId;
+            document.getElementById("profName").innerText = currentAuth.fullName || currentAuth.username;
+            document.getElementById("profContact").innerText = `${currentAuth.email || 'N/A'} | ${currentAuth.phone || 'N/A'}`;
+            document.getElementById("profAddress").innerText = currentAuth.address || "Address registered on CBS profile";
+            document.getElementById("profOfficer").innerText = currentAuth.assignedOfficerName || "Vikram Malhotra";
+        }
+
+        fetchLoans();
+    }
+
+    async function loadCustomerDropdown() {
+        try {
+            const res = await fetch("/api/v1/auth/customers", {
+                headers: { "Authorization": `Bearer ${currentAuth.token}` }
+            });
+            const customers = await res.json();
+            const sel = document.getElementById("assignCustomerId");
+            sel.innerHTML = "";
+            customers.forEach(c => {
+                sel.innerHTML += `<option value="${c.customerId}">CIF-${c.customerId} &bull; ${c.fullName || c.username}</option>`;
+            });
+        } catch (err) {
+            console.error("Could not load customers:", err);
+        }
+    }
+
+    // Fetch and render loans list with role-based controls and CLOSED status support
+    async function fetchLoans() {
+        try {
+            const res = await fetch("/api/v1/loans", {
+                headers: { "Authorization": `Bearer ${currentAuth.token}` }
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                return logout();
+            }
+
+            const data = await res.json();
+            const tbody = document.getElementById("loansTableBody");
+            tbody.innerHTML = "";
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">No loan accounts registered.</td></tr>`;
+                return;
+            }
+
+            const isOfficer = currentAuth.role === "ROLE_OFFICER";
+
+            data.forEach(loan => {
+                const isDisbursed = loan.status === "DISBURSED";
+                const isClosed = loan.status === "CLOSED";
+                const isPending = loan.status === "PENDING";
+
+                // Status Badge Colors
+                let badgeClass = "bg-amber-50 text-amber-700 border border-amber-200";
+                if (isDisbursed) {
+                    badgeClass = "bg-blue-50 text-blue-700 border border-blue-200";
+                } else if (isClosed) {
+                    badgeClass = "bg-emerald-50 text-emerald-700 border border-emerald-200";
+                }
+
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-2.5 px-3 font-semibold text-slate-800">#LN-${loan.loanId}</td>
+                    <td class="py-2.5 px-3 font-medium">CIF-${loan.customerId}</td>
+                    <td class="py-2.5 px-3">${loan.loanType}</td>
+                    <td class="py-2.5 px-3 text-right font-medium">₹${Number(loan.principalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td class="py-2.5 px-3 text-center">${loan.tenureMonths} mo</td>
+                    <td class="py-2.5 px-3 text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${badgeClass}">
+                            ${loan.status}
+                        </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-right space-x-1">
+                        ${isPending && isOfficer
+                    ? `<button onclick="disburseLoan(${loan.loanId})" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] px-2 py-0.5 rounded">Disburse</button>`
+                    : ""
+                }
+                        ${(isDisbursed || isClosed)
+                    ? `<button onclick="viewSchedule(${loan.loanId})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] px-2 py-0.5 rounded border">View Ledger</button>`
+                    : ""
+                }
+                        ${isPending && isOfficer
+                    ? `<button onclick="deleteLoan(${loan.loanId})" class="text-rose-600 hover:text-rose-800 text-[11px] px-1.5 py-0.5" title="Cancel Application"><i class="fa-solid fa-trash"></i></button>`
+                    : ""
+                }
+                    </td>
+                </tr>
+            `;
+            });
+        } catch (err) {
+            console.error("Fetch error:", err);
+        }
+    }
+
+    // Apply/Assign Loan
+    document.getElementById("loanForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const isOfficer = currentAuth.role === "ROLE_OFFICER";
+        const targetCif = isOfficer
+            ? Number(document.getElementById("assignCustomerId").value)
+            : currentAuth.customerId;
+
+        const payload = {
+            customerId: targetCif,
+            principalAmount: parseFloat(document.getElementById("principalAmount").value),
+            annualInterestRate: parseFloat(document.getElementById("interestRate").value),
+            tenureMonths: parseInt(document.getElementById("tenureMonths").value, 10),
+            loanType: document.getElementById("loanType").value
+        };
+
+        await fetch("/api/v1/loans/apply", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${currentAuth.token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        fetchLoans();
+    });
+
+    // Disburse
+    async function disburseLoan(id) {
+        await fetch(`/api/v1/loans/${id}/disburse`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${currentAuth.token}` }
+        });
+        fetchLoans();
+        viewSchedule(id);
+    }
+
+    // Delete
+    async function deleteLoan(id) {
+        if (!confirm(`Cancel/Delete Loan #${id}?`)) return;
+        await fetch(`/api/v1/loans/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${currentAuth.token}` }
+        });
+        fetchLoans();
+    }
+
+    // View Schedule / Ledger
+    async function viewSchedule(id) {
+        activeSelectedLoanId = id;
+        const res = await fetch(`/api/v1/loans/${id}/schedule`, {
+            headers: { "Authorization": `Bearer ${currentAuth.token}` }
+        });
+        const data = await res.json();
+
+        // Check if all remaining installments are paid or empty
+        const isFullyPaid = data.length === 0 || data.every(item => item.status === "PAID");
+        const advanceControl = document.getElementById("advancePayControl");
+
+        if (isFullyPaid && advanceControl) {
+            advanceControl.classList.add("hidden");
+        } else if (currentAuth.role === "ROLE_OFFICER" && advanceControl) {
+            advanceControl.classList.remove("hidden");
+        }
+
+        document.getElementById("scheduleTitle").innerText = `Amortization & Repayments Ledger — Loan #LN-${id} ${isFullyPaid ? '(CLOSED & SETTLED)' : ''}`;
+        const tbody = document.getElementById("scheduleTableBody");
+        tbody.innerHTML = "";
+
+        const isOfficer = currentAuth.role === "ROLE_OFFICER";
+
+        data.forEach(item => {
+            const isPaid = item.status === "PAID";
+            const statusBadge = isPaid
+                ? `<span class="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded text-[10px] font-bold">PAID</span>`
+                : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">UNPAID</span>`;
+
+            let actionHtml = "-";
+            if (!isPaid && isOfficer) {
+                actionHtml = `<button onclick="markEmiPaid(${item.scheduleId})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] px-2 py-0.5 rounded">Receive EMI</button>`;
+            } else if (isPaid) {
+                actionHtml = `<span class="text-[10px] text-slate-500 font-mono">${item.paymentReference || 'TXN-OK'}</span>`;
+            }
+
+            tbody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+                <td class="py-2 px-3 font-semibold text-slate-700">${item.installmentNo}</td>
+                <td class="py-2 px-3 text-slate-600">${item.dueDate}</td>
+                <td class="py-2 px-3 text-right font-medium text-slate-800">₹${Number(item.emiAmount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                <td class="py-2 px-3 text-right text-emerald-600">₹${Number(item.principalComponent).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                <td class="py-2 px-3 text-right text-slate-600">₹${Number(item.interestComponent).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                <td class="py-2 px-3 text-right font-medium text-slate-800">₹${Number(item.outstandingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                <td class="py-2 px-3 text-center">${statusBadge}</td>
+                <td class="py-2 px-3 text-right">${actionHtml}</td>
+            </tr>
+        `;
+        });
+
+        const scheduleSection = document.getElementById("scheduleSection");
+        scheduleSection.classList.remove("hidden");
+        scheduleSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Officer marks EMI received
+    async function markEmiPaid(scheduleId) {
+        await fetch(`/api/v1/loans/schedule/${scheduleId}/pay`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${currentAuth.token}` }
+        });
+        viewSchedule(activeSelectedLoanId);
+    }
+
+    // Officer applies Advance Prepayment
+    async function submitAdvancePayment() {
+        const amount = parseFloat(document.getElementById("advanceAmountInput").value);
+        if (!amount || amount <= 0) return alert("Enter a valid advance amount");
+
+        await fetch(`/api/v1/loans/${activeSelectedLoanId}/advance-pay`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${currentAuth.token}`
+            },
+            body: JSON.stringify({ amount: amount })
+        });
+
+        document.getElementById("advanceAmountInput").value = "";
+        viewSchedule(activeSelectedLoanId);
+    }
+
+    initSession();
+</script>
+</body>
+</html>
